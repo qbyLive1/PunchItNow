@@ -1,0 +1,80 @@
+═══════════════════════════════════════════════════════════════════════
+  ⚡ ШВИДКА ІНСТРУКЦІЯ: ЯК ЗАПУШИТИ НА GITHUB
+═══════════════════════════════════════════════════════════════════════
+
+✅ ЩО ВЖЕ ГОТОВО:
+
+- Git репозиторій ініціалізовано ✓
+- Файли додані та закомічені ✓  
+- 36 файлів готові до публікації ✓
+- .gitignore налаштований ✓
+
+═══════════════════════════════════════════════════════════════════════
+
+🚀 3 ПРОСТИХ КРОКИ:
+
+КРОК 1: Створіть репозиторій на GitHub
+────────────────────────────────────────
+1. Відкрийте https://github.com
+2. Натисніть "+" (вгорі справа) → "New repository"
+3. Назва: PunchITNow
+4. НЕ ставте галочки (README, .gitignore)
+5. "Create repository"
+
+КРОК 2: Підключіть та запуште
+────────────────────────────────────────
+Скопіюйте ВАШ username та виконайте:
+
+    git remote add origin https://github.com/YOUR_USERNAME/PunchITNow.git
+    git branch -M main
+    git push -u origin main
+
+ПРИКЛАД (замініть YOUR_USERNAME):
+    git remote add origin https://github.com/AlexFarmPunch/PunchITNow.git
+    git branch -M main
+    git push -u origin main
+
+КРОК 3: Оновіть URL у коді
+────────────────────────────────────────
+Відкрийте "New soft 3.0.py" та знайдіть (Ctrl+F):
+
+    VERSION_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/version.json"
+
+Замініть YOUR_USERNAME та YOUR_REPO на ваші!
+
+═══════════════════════════════════════════════════════════════════════
+
+🔐 ЯКЩО ПОТРІБЕН TOKEN:
+
+GitHub → Settings → Developer settings → Personal access tokens
+→ Generate new token (classic)
+→ Права: repo
+→ Збережіть token!
+
+При push:
+- Username: ваш GitHub username  
+- Password: згенерований token
+
+═══════════════════════════════════════════════════════════════════════
+
+📦 ПІСЛЯ PUSH: СТВОРІТЬ RELEASE
+
+1. GitHub → ваш репозиторій → Releases
+2. "Create a new release"
+3. Tag: v9.2.0
+4. Title: PunchITNow v9.2.0
+5. Завантажте .exe файл
+6. "Publish release"
+
+═══════════════════════════════════════════════════════════════════════
+
+✅ ВСЕ ГОТОВО!
+
+Тепер користувачі зможуть:
+- Клонувати репозиторій
+- Отримувати автооновлення
+- Завантажувати .exe з Releases
+
+═══════════════════════════════════════════════════════════════════════
+
+Детальніше: GITHUB_SETUP.txt

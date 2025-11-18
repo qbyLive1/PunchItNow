@@ -1,0 +1,13 @@
+{
+  "profile_name": "Название",
+  "email": "Почта",
+  "password": "Пароль",
+  "2fa": "2фа",
+  "backup_codes": "Бэкап",
+  "reserve_mail": "Резервка",
+  "credit_card": "Карта",
+  "conversion": "конверсія",
+  "api_cf": "API CF",
+  "cf_id": "CF ID",
+  "cf_password": "CF Pass"
+}

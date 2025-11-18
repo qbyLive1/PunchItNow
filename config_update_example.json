@@ -1,0 +1,13 @@
+{
+  "features_config.json": {
+    "features": {
+      "email_validator": true,
+      "auto_refresh": true,
+      "new_feature_example": true
+    }
+  },
+  "hotkeys_config.json": {
+    "minimize_restore": "f3",
+    "octo_browser": "f"
+  }
+}

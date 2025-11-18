@@ -1,0 +1,92 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+*.manifest
+*.spec
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project specific
+*.BACKUP_*.py
+*.old
+*.bak
+*BACKUP*.py
+
+# Build files
+build/
+dist/
+release/
+cpp_port/
+*.spec
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# Config files with sensitive data (оставляем примеры)
+config/*.json
+!config/*_example.json
+
+# Generated files
+generated_files/
+__pycache__/
+
+# CSV files with data
+*.csv
+!*_example.csv
+
+# Large files
+*.exe
+*.app
+*.dmg
+*.pkg
+
+# Organizations data (содержит пользовательские данные)
+Organizations/
+App Stuff/
+
+# Temporary files
+*.tmp
+*.temp
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Backup files
+*.backup
+*BACKUP*
+
+# Icon files (если не нужны в репо)
+*.icns
+*.ico

@@ -1,0 +1,37 @@
+# ============================================================
+# PunchITNow 9.0 Octopus - macOS Requirements
+# ============================================================
+
+# GUI Framework
+customtkinter>=5.2.0
+Pillow>=10.0.0
+
+# Excel & Data Processing
+openpyxl>=3.1.0
+pandas>=2.0.0
+
+# HTTP Requests
+requests>=2.31.0
+urllib3>=2.0.0
+
+# Keyboard & Mouse Control
+pynput>=1.7.6
+
+# JSON & Configuration
+jsonschema>=4.19.0
+
+# System & Platform
+psutil>=5.9.0
+
+# Build Tools
+pyinstaller>=6.0.0
+
+# macOS Specific
+pyobjc-framework-Cocoa>=10.0
+pyobjc-framework-Quartz>=10.0
+
+# Additional Dependencies
+python-dateutil>=2.8.2
+six>=1.16.0
+
+keyboard>=0.13.5
