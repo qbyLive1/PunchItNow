@@ -1,7 +1,7 @@
-﻿{
+{
   "version": "9.3.1",
-  "download_url": "https://github.com/qbyLive1/PunchItNow/releases/download/v9.3.1/PunchITNow-v9.3.1.zip",
-  "changelog": " Що нового у версії 9.3.1:\n\n Покращення оновлень:\n Додано обхід кешу GitHub CDN для актуальної інформації\n Збільшено затримку перед автозапуском до 5 секунд\n Виправлено помилку Python DLL при автозапуску\n\n Всі функції з версії 9.3.0:\n Система автооновлень через ZIP архів\n Автоматичне резервне копіювання\n Розпакування та заміна файлів",
+  "download_url": "https://github.com/qbyLive1/PunchItNow/releases/download/v9.3.1/PunchITNow_v9.3.1_Release.zip",
+  "changelog": "🔧 Bug Fixes v9.3.1:\n\n✅ Fixed CVV field skip bug in card autofill\n✅ Changed hotkey from Ctrl+V to V key\n✅ Added 300ms debounce protection\n✅ Improved reliability with lock mechanism",
   "required": false,
   "min_version": "9.0.0"
 }
