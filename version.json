@@ -1,6 +1,6 @@
 ﻿{
   "version": "9.3.0",
-  "download_url": "https://github.com/qbyLive1/PunchItNow/releases/download/v9.3.0/PunchITNow-v9.3.0.zip",
+  "download_url": "https://github.com/qbyLive1/PunchItNow/releases/download/update1/PunchITNow-v9.3.0.zip",
   "changelog": " Що нового у версії 9.3.0:\n\n Тестове оновлення:\n Перевірка системи автооновлень через ZIP архів\n Тестування резервного копіювання файлів\n Перевірка розпакування та заміни файлів\n\n Всі функції з версії 9.2.0:\n Система автооновлень з GitHub\n Покращено парсинг Google Sheets\n Settings секція для перевірки оновлень\n ZIP архів з резервним копіюванням",
   "required": false,
   "min_version": "9.0.0"
