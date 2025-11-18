@@ -13479,7 +13479,7 @@ class App(ctk.CTk):
             VERSION_URL = "https://raw.githubusercontent.com/qbyLive1/PunchItNow/main/version.json"
             
             # Поточна версія
-            CURRENT_VERSION = "9.3.0"
+            CURRENT_VERSION = "9.3.1"
             
             # Показуємо діалог з прогресом
             progress_dialog = ctk.CTkToplevel(self)
