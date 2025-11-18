@@ -1,7 +1,7 @@
 ﻿{
   "version": "9.2.0",
-  "download_url": "https://github.com/qbyLive1/PunchITNow/releases/download/v9.2.0/PunchITNow.exe",
-  "config_url": "https://raw.githubusercontent.com/qbyLive1/PunchITNow/main/config_update.json",
+  "download_url": "https://github.com/qbyLive1/PunchItNow/releases/download/v9.2.0/PunchITNow.exe",
+  "config_url": "https://raw.githubusercontent.com/qbyLive1/PunchItNow/main/config_update.json",
   "changelog": " Що нового у версії 9.2.0:\n\n Нові функції:\n Додано систему автооновлень з GitHub\n Покращено парсинг Google Sheets з налаштовуваними колонками\n Додано Settings секцію для перевірки оновлень\n\n Виправлення:\n Виправлено помилку з CVV полем у card autofill\n Покращено стабільність x4 режиму Organization Control\n Виправлено 'CTkTabview object has no attribute' помилку\n\n Покращення:\n Збільшено затримки card autofill на 25%\n Оптимізовано завантаження профілів з Google Sheets\n Додано динамічний мапінг колонок таблиць",
   "required": false,
   "min_version": "9.0.0"

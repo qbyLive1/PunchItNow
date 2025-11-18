@@ -13475,7 +13475,7 @@ class App(ctk.CTk):
             from packaging import version
             
             # URL до version.json на GitHub
-            VERSION_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/version.json"
+            VERSION_URL = "https://raw.githubusercontent.com/qbyLive1/PunchItNow/main/version.json"
             
             # Поточна версія
             CURRENT_VERSION = "9.2.0"
