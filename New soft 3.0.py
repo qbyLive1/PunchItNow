@@ -13617,11 +13617,13 @@ class App(ctk.CTk):
                      fg_color="gray", hover_color="darkgray").pack(side="left", padx=5)
     
     def download_and_install_update(self, download_url, config_url):
-        """Завантажує та встановлює оновлення"""
+        """Завантажує та встановлює оновлення з .zip архіву"""
         try:
             import requests
             import tempfile
             import subprocess
+            import zipfile
+            import shutil
             
             # Створюємо діалог прогресу
             progress_dialog = ctk.CTkToplevel(self)
@@ -13637,7 +13639,7 @@ class App(ctk.CTk):
             progress_dialog.geometry(f"+{x}+{y}")
             
             status_label = ctk.CTkLabel(progress_dialog, 
-                                       text="⬇️ Завантаження файлу...",
+                                       text="⬇️ Завантаження архіву...",
                                        font=ctk.CTkFont(size=14))
             status_label.pack(pady=20)
             
@@ -13650,7 +13652,7 @@ class App(ctk.CTk):
             
             self.update()
             
-            # Завантажуємо .exe файл
+            # Завантажуємо .zip архів
             response = requests.get(download_url, stream=True, timeout=30)
             response.raise_for_status()
             
@@ -13658,10 +13660,10 @@ class App(ctk.CTk):
             downloaded = 0
             
             # Зберігаємо в тимчасовий файл
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".exe")
-            temp_path = temp_file.name
+            temp_zip = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+            temp_zip_path = temp_zip.name
             
-            with temp_file as f:
+            with temp_zip as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
                         f.write(chunk)
@@ -13673,85 +13675,103 @@ class App(ctk.CTk):
                             percent_label.configure(text=f"{int(progress * 100)}%")
                             self.update()
             
-            status_label.configure(text="✅ Завантаження завершено!")
-            progress_bar.set(1.0)
+            status_label.configure(text="📦 Розпаковування архіву...")
+            progress_bar.set(0.5)
             self.update()
             
-            # Завантажуємо config якщо є
-            if config_url:
-                status_label.configure(text="⬇️ Завантаження конфігурації...")
-                self.update()
+            # Створюємо тимчасову папку для розпакування
+            temp_extract_dir = tempfile.mkdtemp(prefix="punchinow_update_")
+            
+            try:
+                # Розпаковуємо архів
+                with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
+                    zip_ref.extractall(temp_extract_dir)
                 
-                try:
-                    config_response = requests.get(config_url, timeout=10)
-                    config_response.raise_for_status()
-                    
-                    # Зберігаємо конфіг
-                    config_data = config_response.json()
-                    for config_file, config_content in config_data.items():
-                        config_path = get_config_path(config_file)
-                        with open(config_path, "w", encoding="utf-8") as f:
-                            json.dump(config_content, f, ensure_ascii=False, indent=2)
-                    
-                    status_label.configure(text="✅ Конфігурація оновлена!")
-                except Exception as e:
-                    print(f"⚠️ Не вдалося завантажити конфіг: {e}")
-            
-            self.update()
-            time.sleep(1)
-            
-            progress_dialog.destroy()
-            
-            # Створюємо bat-скрипт для заміни файлу
-            current_exe = sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)
-            current_dir = os.path.dirname(current_exe)
-            
-            # Ім'я старого файлу (для backup)
-            old_exe = os.path.join(current_dir, "PunchITNow_old.exe")
-            
-            # Bat-скрипт для Windows
-            bat_content = f"""@echo off
-echo Оновлення Punch IT Now...
+                status_label.configure(text="✅ Архів розпаковано!")
+                progress_bar.set(1.0)
+                self.update()
+                time.sleep(1)
+                
+                progress_dialog.destroy()
+                
+                # Визначаємо поточну директорію програми
+                if getattr(sys, 'frozen', False):
+                    current_exe = sys.executable
+                    current_dir = os.path.dirname(current_exe)
+                else:
+                    current_exe = os.path.abspath(__file__)
+                    current_dir = os.path.dirname(current_exe)
+                
+                # Створюємо bat-скрипт для оновлення
+                bat_content = f"""@echo off
+chcp 65001 >nul
+echo 🔄 Оновлення Punch IT Now...
 timeout /t 2 /nobreak >nul
 
-REM Видаляємо старий backup якщо є
-if exist "{old_exe}" del "{old_exe}"
+cd /d "{current_dir}"
 
-REM Перейменовуємо поточний exe в backup
-if exist "{current_exe}" ren "{current_exe}" "PunchITNow_old.exe"
+REM Створюємо backup папку
+if not exist "backup" mkdir "backup"
 
-REM Копіюємо новий exe
-copy "{temp_path}" "{current_exe}"
+REM Зберігаємо важливі файли в backup
+if exist "PunchITNow.exe" (
+    echo 💾 Створення резервної копії...
+    copy /Y "PunchITNow.exe" "backup\\PunchITNow_backup.exe" >nul
+)
+if exist "config" (
+    xcopy /E /I /Y "config" "backup\\config" >nul
+)
 
-REM Видаляємо тимчасовий файл
-del "{temp_path}"
+REM Копіюємо нові файли з тимчасової папки
+echo 📂 Копіювання нових файлів...
+xcopy /E /I /Y "{temp_extract_dir}\\*" "{current_dir}" >nul
 
-REM Запускаємо нову версію
+REM Видаляємо тимчасовий архів
+del "{temp_zip_path}" >nul
+
+REM Видаляємо тимчасову папку
+rmdir /S /Q "{temp_extract_dir}" >nul
+
+echo ✅ Оновлення завершено!
+timeout /t 2 /nobreak >nul
+
+REM Запускаємо оновлену програму
 start "" "{current_exe}"
 
 REM Видаляємо bat-скрипт
 (goto) 2>nul & del "%~f0"
 """
-            
-            bat_path = os.path.join(tempfile.gettempdir(), "update_punchinow.bat")
-            with open(bat_path, "w", encoding="cp1251") as f:
-                f.write(bat_content)
-            
-            # Показуємо повідомлення
-            result = messagebox.askyesno("🔄 Перезапуск", 
-                                        "Оновлення завантажено!\n\n"
-                                        "Програма буде перезапущена для встановлення оновлення.\n"
-                                        "Продовжити?")
-            
-            if result:
-                # Запускаємо bat-скрипт і закриваємо програму
-                subprocess.Popen([bat_path], shell=True)
-                self.quit()
-            else:
-                # Видаляємо тимчасові файли
-                os.unlink(temp_path)
-                os.unlink(bat_path)
-                messagebox.showinfo("ℹ️", "Оновлення відкладено. Файл збережено в тимчасовій папці.")
+                
+                bat_path = os.path.join(tempfile.gettempdir(), "update_punchinow.bat")
+                with open(bat_path, "w", encoding="utf-8") as f:
+                    f.write(bat_content)
+                
+                # Показуємо повідомлення
+                result = messagebox.askyesno("🔄 Перезапуск", 
+                                            "Оновлення завантажено!\n\n"
+                                            "Програма буде перезапущена для встановлення оновлення.\n"
+                                            "Резервна копія буде збережена в папці 'backup'.\n\n"
+                                            "Продовжити?")
+                
+                if result:
+                    # Запускаємо bat-скрипт і закриваємо програму
+                    subprocess.Popen([bat_path], shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                    self.quit()
+                else:
+                    # Видаляємо тимчасові файли
+                    os.unlink(temp_zip_path)
+                    os.unlink(bat_path)
+                    shutil.rmtree(temp_extract_dir, ignore_errors=True)
+                    messagebox.showinfo("ℹ️", "Оновлення відкладено.")
+                    
+            except zipfile.BadZipFile:
+                progress_dialog.destroy()
+                messagebox.showerror("❌ Помилка", 
+                                   "Завантажений файл не є коректним ZIP архівом.")
+            finally:
+                # Очищення тимчасових файлів у разі помилки
+                if os.path.exists(temp_zip_path):
+                    os.unlink(temp_zip_path)
                 
         except requests.exceptions.RequestException as e:
             messagebox.showerror("❌ Помилка", 
