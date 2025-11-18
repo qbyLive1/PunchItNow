@@ -13508,7 +13508,14 @@ class App(ctk.CTk):
                 # Завантажуємо інформацію про версію
                 response = requests.get(VERSION_URL, timeout=10)
                 response.raise_for_status()
-                version_info = response.json()
+                
+                # Читаємо контент і видаляємо BOM якщо є
+                content = response.content
+                if content.startswith(b'\xef\xbb\xbf'):
+                    content = content[3:]  # Видаляємо UTF-8 BOM
+                
+                import json
+                version_info = json.loads(content.decode('utf-8'))
                 
                 latest_version = version_info.get("version", "0.0.0")
                 download_url = version_info.get("download_url", "")
