@@ -1746,6 +1746,8 @@ class GmailHacksTab(ctk.CTkFrame):
         self.card_sequence = []  # Послідовність даних для вставки [номер, дата, cvv]
         self.card_sequence_index = 0  # Поточний індекс в послідовності
         self.original_clipboard = ""  # Оригінальний вміст буфера
+        self.card_paste_in_progress = False  # Флаг блокування подвійної обробки
+        self.last_paste_time = 0  # Час останньої вставки для debounce
         self.generator_visible = True  # Стан видимості Profile Generator
         self.generator_content_frame = None  # Фрейм контенту генератора
         self.generator_toggle_btn = None  # Кнопка згортання генератора
@@ -1908,8 +1910,9 @@ class GmailHacksTab(ctk.CTkFrame):
             self.setup_card_autofill_hotkey()
             print("=" * 50)
             print("✅ ГЛОБАЛЬНЕ АВТОЗАПОВНЕННЯ КАРТКИ УВІМКНЕНО")
-            print("📌 Натисніть Ctrl+V будь-де - картка заповниться автоматично!")
+            print("📌 Натискайте клавішу V (без Ctrl) - картка заповниться автоматично!")
             print("📌 Формат: 4262890017681197 11/28 232")
+            print("📌 V раз #1 → номер, V раз #2 → дата, V раз #3 → CVV")
             print("=" * 50)
         else:
             if self.card_toggle_btn:
@@ -1917,34 +1920,34 @@ class GmailHacksTab(ctk.CTkFrame):
             self.disable_card_autofill_hotkey()
             print("=" * 50)
             print("❌ ГЛОБАЛЬНЕ АВТОЗАПОВНЕННЯ КАРТКИ ВИМКНЕНО")
-            print("📌 Ctrl+V працює як звичайна вставка")
+            print("📌 Клавіша V працює як звичайна")
             print("=" * 50)
 
     def setup_card_autofill_hotkey(self):
-        """Встановлює глобальний перехоплювач Ctrl+V для автозаповнення карток"""
+        """Встановлює глобальний перехоплювач V для автозаповнення карток"""
         try:
             keyboard = get_keyboard()
             if keyboard and IS_WINDOWS:
                 # Видаляємо старий hotkey якщо є
                 try:
-                    keyboard.remove_hotkey('ctrl+v')
+                    keyboard.remove_hotkey('v')
                 except:
                     pass
                 
-                # Встановлюємо hotkey з suppress=True щоб перехопити Ctrl+V
-                keyboard.add_hotkey('ctrl+v', self.handle_card_paste_sequence, suppress=True)
-                print("✓ Глобальний перехоплювач Ctrl+V активовано")
+                # Встановлюємо hotkey з suppress=True щоб перехопити лише V
+                keyboard.add_hotkey('v', self.handle_card_paste_sequence, suppress=True)
+                print("✓ Глобальний перехоплювач V активовано (без Ctrl)")
         except Exception as e:
             print(f"⚠️ Не вдалося встановити hotkey для карток: {e}")
 
     def disable_card_autofill_hotkey(self):
-        """Вимикає глобальний перехоплювач Ctrl+V"""
+        """Вимикає глобальний перехоплювач V"""
         try:
             keyboard = get_keyboard()
             if keyboard and IS_WINDOWS:
                 try:
-                    keyboard.remove_hotkey('ctrl+v')
-                    print("✓ Глобальний перехоплювач Ctrl+V вимкнено")
+                    keyboard.remove_hotkey('v')
+                    print("✓ Глобальний перехоплювач V вимкнено")
                 except:
                     pass
                 
@@ -1955,8 +1958,28 @@ class GmailHacksTab(ctk.CTkFrame):
             print(f"⚠️ Помилка вимкнення hotkey: {e}")
 
     def handle_card_paste_sequence(self):
-        """Обробляє послідовне Ctrl+V для вставки частин картки"""
+        """Обробляє послідовне натискання V для вставки частин картки"""
         try:
+            import time
+            
+            # DEBOUNCE: ігноруємо повторні натискання швидше ніж 300ms (0.3 сек)
+            current_time = time.time()
+            time_since_last = current_time - self.last_paste_time
+            
+            if time_since_last < 0.3:
+                print(f"⚠️ Debounce: ігноруємо швидке повторне натискання (пройшло {time_since_last*1000:.0f}ms, потрібно 300ms)")
+                return
+            
+            print(f"⏱️ Часова перевірка OK: пройшло {time_since_last*1000:.0f}ms з попереднього натискання")
+            self.last_paste_time = current_time
+            
+            # LOCK: якщо вже обробляємо - ігноруємо
+            if self.card_paste_in_progress:
+                print("⚠️ Lock: вставка вже виконується, ігноруємо подвійний виклик")
+                return
+            
+            self.card_paste_in_progress = True
+            
             keyboard = get_keyboard()
             
             # Якщо послідовність порожня - перевіряємо буфер на наявність картки
@@ -1985,27 +2008,29 @@ class GmailHacksTab(ctk.CTkFrame):
                     print("\n" + "=" * 60)
                     print("💳 ДЕТЕКТОВАНО КАРТКУ В БУФЕРІ!")
                     print(f"   Послідовність: {card_number[:4]}**** → {expiry_date} → ***")
-                    print(f"   Ctrl+V #1 → {card_number[:4]}****{card_number[-4:]}")
-                    print(f"   Ctrl+V #2 → {expiry_date}")
-                    print(f"   Ctrl+V #3 → ***")
+                    print(f"   V раз #1 → {card_number[:4]}****{card_number[-4:]}")
+                    print(f"   V раз #2 → {expiry_date}")
+                    print(f"   V раз #3 → ***")
                     print("=" * 60 + "\n")
                     
                     # Вставляємо перший елемент (номер картки) через typewrite
                     current_data = self.card_sequence[0]
-                    print(f"✓ Ctrl+V #1: {current_data[:4]}****{current_data[-4:]}")
+                    print(f"✓ V раз #1: {current_data[:4]}****{current_data[-4:]}")
                     keyboard.write(current_data)
                     self.card_sequence_index = 1
+                    self.card_paste_in_progress = False  # Розблокування
                     return
                 else:
                     # Не картка - вставляємо оригінальний текст через typewrite
                     keyboard.write(clipboard_text)
+                    self.card_paste_in_progress = False  # Розблокування
                     return
             
             # Якщо є послідовність - вставляємо наступний елемент
             if self.card_sequence and self.card_sequence_index < len(self.card_sequence):
                 current_data = self.card_sequence[self.card_sequence_index]
                 
-                print(f"✓ Ctrl+V #{self.card_sequence_index + 1}: {current_data if self.card_sequence_index != 2 else '***'}")
+                print(f"✓ V раз #{self.card_sequence_index + 1}: {current_data if self.card_sequence_index != 2 else '***'} (індекс: {self.card_sequence_index}/{len(self.card_sequence)})")
                 
                 # Вставляємо через typewrite
                 keyboard.write(current_data)
@@ -2017,18 +2042,22 @@ class GmailHacksTab(ctk.CTkFrame):
                     print("✅ Послідовність завершено\n")
                     self.card_sequence = []
                     self.card_sequence_index = 0
+                
+                self.card_paste_in_progress = False  # Розблокування після кожної вставки
             else:
                 # Якась помилка в послідовності - вставляємо те що в буфері
                 self.card_sequence = []
                 self.card_sequence_index = 0
                 clipboard_text = get_from_clipboard().strip()
                 keyboard.write(clipboard_text)
+                self.card_paste_in_progress = False  # Розблокування
                 
         except Exception as e:
             print(f"⚠️ Помилка обробки послідовності: {e}")
             # При помилці - вставляємо те що в буфері
             self.card_sequence = []
             self.card_sequence_index = 0
+            self.card_paste_in_progress = False  # Розблокування при помилці
             try:
                 keyboard = get_keyboard()
                 clipboard_text = get_from_clipboard().strip()
@@ -2161,7 +2190,7 @@ class GmailHacksTab(ctk.CTkFrame):
             
             # Номер картки вже вставлений стандартним Ctrl+V
             # Просто чекаємо і переходимо далі
-            self.after(500, lambda: self.continue_card_fill_step2(card_number, expiry_date, cvv))
+            self.after(1500, lambda: self.continue_card_fill_step2(card_number, expiry_date, cvv))
             
         except ImportError:
             print("⚠️ pyautogui не встановлено. Встановіть: pip install pyautogui")
@@ -2183,8 +2212,8 @@ class GmailHacksTab(ctk.CTkFrame):
             safe_clipboard_operation("set", card_number)
             print(f"📋 Номер картки скопійовано в буфер: {card_number[:4]}****{card_number[-4:]}")
             
-            # Чекаємо та переходимо до наступного кроку (швидше)
-            self.after(125, lambda: self.continue_card_fill_step2(card_number, expiry_date, cvv))
+            # Чекаємо та переходимо до наступного кроку
+            self.after(375, lambda: self.continue_card_fill_step2(card_number, expiry_date, cvv))
             
         except ImportError:
             print("⚠️ pyautogui не встановлено. Встановіть: pip install pyautogui")
@@ -2197,12 +2226,12 @@ class GmailHacksTab(ctk.CTkFrame):
         try:
             import pyautogui
             
-            # Використовуємо typewrite для швидкого вводу (як Octo Browser Ctrl+Shift+E)
-            pyautogui.typewrite(card_number, interval=0.01)  # 10ms між символами
+            # Використовуємо typewrite для повільного надійного вводу
+            pyautogui.typewrite(card_number, interval=0.25)  # 250ms між символами (~4/сек)
             print(f"✓ typewrite -> введено номер картки: {card_number[:4]}****{card_number[-4:]}")
             
-            # Швидша затримка перед Tab
-            self.after(187, lambda: self.continue_card_fill_step3(expiry_date, cvv))
+            # Затримка перед Tab
+            self.after(561, lambda: self.continue_card_fill_step3(expiry_date, cvv))
             
         except Exception as e:
             print(f"⚠️ Помилка вставки номера: {e}")
@@ -2216,8 +2245,8 @@ class GmailHacksTab(ctk.CTkFrame):
             pyautogui.press('tab')
             print("✓ Tab -> поле дати")
             
-            # Швидша затримка перед вставкою дати
-            self.after(125, lambda: self.continue_card_fill_step4(expiry_date, cvv))
+            # Затримка перед вставкою дати
+            self.after(375, lambda: self.continue_card_fill_step4(expiry_date, cvv))
             
         except Exception as e:
             print(f"⚠️ Помилка Tab до дати: {e}")
@@ -2227,12 +2256,12 @@ class GmailHacksTab(ctk.CTkFrame):
         try:
             import pyautogui
             
-            # Вводимо дату посимвольно (швидше і надійніше)
-            pyautogui.typewrite(expiry_date.replace('/', ''), interval=0.02)  # Вводимо без слешу
+            # Вводимо дату посимвольно повільніше
+            pyautogui.typewrite(expiry_date.replace('/', ''), interval=0.25)  # Вводимо без слешу (~4/сек)
             print(f"✓ typewrite -> введено дату: {expiry_date}")
             
-            # Швидша затримка перед Tab до CVV
-            self.after(187, lambda: self.continue_card_fill_step5(cvv))
+            # Затримка перед Tab до CVV
+            self.after(561, lambda: self.continue_card_fill_step5(cvv))
             
         except Exception as e:
             print(f"⚠️ Помилка вставки дати: {e}")
@@ -2246,8 +2275,8 @@ class GmailHacksTab(ctk.CTkFrame):
             pyautogui.press('tab')
             print("✓ Tab -> CVV поле")
             
-            # Швидша затримка перед вставкою CVV
-            self.after(125, lambda: self.continue_card_fill_step6(cvv))
+            # Затримка перед вставкою CVV
+            self.after(375, lambda: self.continue_card_fill_step6(cvv))
             
         except Exception as e:
             print(f"⚠️ Помилка Tab до CVV: {e}")
@@ -2257,8 +2286,8 @@ class GmailHacksTab(ctk.CTkFrame):
         try:
             import pyautogui
             
-            # Вводимо CVV посимвольно
-            pyautogui.typewrite(cvv, interval=0.02)  # 20ms між цифрами
+            # Вводимо CVV посимвольно повільніше
+            pyautogui.typewrite(cvv, interval=0.25)  # 250ms між цифрами (~4/сек)
             print(f"✓ typewrite -> введено CVV: ***")
             print("✅ Автозаповнення картки завершено!")
             
@@ -2519,19 +2548,22 @@ class GmailHacksTab(ctk.CTkFrame):
                 
                 # Завантажуємо вміст company.txt
                 company_txt_path = os.path.join(org_info['path'], "company.txt")
+                # Додаємо шлях до папки організації внизу
+                folder_path_line = f"\n\n{org_info['path']}"
+                
                 if org_info['has_company']:
                     try:
                         with open(company_txt_path, 'r', encoding='utf-8') as f:
                             content = f.read().strip()
                             if content:
                                 parsed_content, _ = self.parse_postal_code(content)
-                                textbox.insert("0.0", parsed_content)
+                                textbox.insert("0.0", parsed_content + folder_path_line)
                             else:
-                                textbox.insert("0.0", "📄 Порожній файл")
+                                textbox.insert("0.0", "📄 Порожній файл" + folder_path_line)
                     except Exception as e:
-                        textbox.insert("0.0", f"❌ Помилка: {e}")
+                        textbox.insert("0.0", f"❌ Помилка: {e}" + folder_path_line)
                 else:
-                    textbox.insert("0.0", "❌ company.txt відсутній")
+                    textbox.insert("0.0", "❌ company.txt відсутній" + folder_path_line)
                 
                 # Налаштовуємо click-to-copy для цього textbox
                 # Прив'язуємо до внутрішнього _textbox віджета з безпечною перевіркою
