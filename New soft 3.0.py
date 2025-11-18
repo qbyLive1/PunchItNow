@@ -17040,14 +17040,14 @@ def get_current_sound_file():
     return None
 
 def main():
-    # Перевіряємо оновлення перед запуском
-    try:
-        has_update, new_version, changelog = check_for_updates()
-        if has_update:
-            # Показуємо повідомлення в окремому потоці щоб не блокувати запуск
-            threading.Thread(target=lambda: show_update_notification(new_version, changelog), daemon=True).start()
-    except:
-        pass
+    # Перевірку оновлень тепер робимо через кнопку в Settings
+    # try:
+    #     has_update, new_version, changelog = check_for_updates()
+    #     if has_update:
+    #         threading.Thread(target=lambda: show_update_notification(new_version, changelog), daemon=True).start()
+    # except:
+    #     pass
+    pass
     
     # Налаштовуємо звуковий файл
     try:
