@@ -13470,84 +13470,88 @@ class App(ctk.CTk):
     
     def check_for_updates(self):
         """Перевіряє наявність оновлень на GitHub"""
-        try:
-            import requests
-            from packaging import version
-            
-            # URL до version.json на GitHub
-            VERSION_URL = "https://raw.githubusercontent.com/qbyLive1/PunchItNow/main/version.json"
-            
-            # Поточна версія
-            CURRENT_VERSION = "9.2.0"
-            
-            # Показуємо діалог з прогресом
-            progress_dialog = ctk.CTkToplevel(self)
-            progress_dialog.title("🔄 Перевірка оновлень")
-            progress_dialog.geometry("400x200")
-            progress_dialog.transient(self)
-            progress_dialog.grab_set()
-            
-            # Центруємо діалог
-            progress_dialog.update_idletasks()
-            x = (progress_dialog.winfo_screenwidth() // 2) - (400 // 2)
-            y = (progress_dialog.winfo_screenheight() // 2) - (200 // 2)
-            progress_dialog.geometry(f"+{x}+{y}")
-            
-            status_label = ctk.CTkLabel(progress_dialog, 
-                                       text="🔍 Перевірка оновлень...",
-                                       font=ctk.CTkFont(size=14))
-            status_label.pack(pady=30)
-            
-            progress = ctk.CTkProgressBar(progress_dialog, width=300)
-            progress.pack(pady=20)
-            progress.set(0.3)
-            
-            self.update()
-            
+        import threading
+        
+        def check_updates_thread():
             try:
-                # Завантажуємо інформацію про версію
-                response = requests.get(VERSION_URL, timeout=10)
-                response.raise_for_status()
-                
-                # Читаємо контент і видаляємо BOM якщо є
-                content = response.content
-                if content.startswith(b'\xef\xbb\xbf'):
-                    content = content[3:]  # Видаляємо UTF-8 BOM
-                
+                import requests
+                from packaging import version
                 import json
-                version_info = json.loads(content.decode('utf-8'))
                 
-                latest_version = version_info.get("version", "0.0.0")
-                download_url = version_info.get("download_url", "")
-                changelog = version_info.get("changelog", "")
-                config_url = version_info.get("config_url", "")
+                # URL до version.json на GitHub
+                VERSION_URL = "https://raw.githubusercontent.com/qbyLive1/PunchItNow/main/version.json"
                 
-                progress.set(1.0)
-                self.update()
+                # Поточна версія
+                CURRENT_VERSION = "9.2.0"
                 
-                progress_dialog.destroy()
-                
-                # Порівнюємо версії
-                if version.parse(latest_version) > version.parse(CURRENT_VERSION):
-                    # Є оновлення
-                    self.show_update_dialog(latest_version, CURRENT_VERSION, download_url, changelog, config_url)
-                else:
-                    messagebox.showinfo("✅ Оновлення", 
-                                      f"У вас встановлена остання версія!\n\n"
-                                      f"Поточна версія: {CURRENT_VERSION}")
+                try:
+                    # Завантажуємо інформацію про версію
+                    response = requests.get(VERSION_URL, timeout=10)
+                    response.raise_for_status()
                     
-            except requests.exceptions.RequestException as e:
-                progress_dialog.destroy()
-                messagebox.showerror("❌ Помилка", 
-                                   f"Не вдалося перевірити оновлення:\n{str(e)}\n\n"
-                                   f"Перевірте інтернет-з'єднання.")
-                
-        except ImportError:
-            messagebox.showerror("❌ Помилка", 
-                               "Відсутній модуль 'requests' або 'packaging'.\n\n"
-                               "Встановіть: pip install requests packaging")
-        except Exception as e:
-            messagebox.showerror("❌ Помилка", f"Помилка перевірки оновлень:\n{str(e)}")
+                    # Читаємо контент і видаляємо BOM якщо є
+                    content = response.content
+                    if content.startswith(b'\xef\xbb\xbf'):
+                        content = content[3:]  # Видаляємо UTF-8 BOM
+                    
+                    version_info = json.loads(content.decode('utf-8'))
+                    
+                    latest_version = version_info.get("version", "0.0.0")
+                    download_url = version_info.get("download_url", "")
+                    changelog = version_info.get("changelog", "")
+                    config_url = version_info.get("config_url", "")
+                    
+                    # Закриваємо діалог прогресу
+                    self.after(0, lambda: progress_dialog.destroy())
+                    
+                    # Порівнюємо версії
+                    if version.parse(latest_version) > version.parse(CURRENT_VERSION):
+                        # Є оновлення - показуємо в головному потоці
+                        self.after(0, lambda: self.show_update_dialog(latest_version, CURRENT_VERSION, download_url, changelog, config_url))
+                    else:
+                        self.after(0, lambda: messagebox.showinfo("✅ Оновлення", 
+                                          f"У вас встановлена остання версія!\n\n"
+                                          f"Поточна версія: {CURRENT_VERSION}"))
+                        
+                except requests.exceptions.RequestException as e:
+                    self.after(0, lambda: progress_dialog.destroy())
+                    self.after(0, lambda: messagebox.showerror("❌ Помилка", 
+                                       f"Не вдалося перевірити оновлення:\n{str(e)}\n\n"
+                                       f"Перевірте інтернет-з'єднання."))
+                    
+            except ImportError:
+                self.after(0, lambda: messagebox.showerror("❌ Помилка", 
+                                   "Відсутній модуль 'requests' або 'packaging'.\n\n"
+                                   "Встановіть: pip install requests packaging"))
+            except Exception as e:
+                self.after(0, lambda: messagebox.showerror("❌ Помилка", f"Помилка перевірки оновлень:\n{str(e)}"))
+        
+        # Показуємо діалог з прогресом
+        progress_dialog = ctk.CTkToplevel(self)
+        progress_dialog.title("🔄 Перевірка оновлень")
+        progress_dialog.geometry("400x200")
+        progress_dialog.transient(self)
+        progress_dialog.grab_set()
+        
+        # Центруємо діалог
+        progress_dialog.update_idletasks()
+        x = (progress_dialog.winfo_screenwidth() // 2) - (400 // 2)
+        y = (progress_dialog.winfo_screenheight() // 2) - (200 // 2)
+        progress_dialog.geometry(f"+{x}+{y}")
+        
+        status_label = ctk.CTkLabel(progress_dialog, 
+                                   text="🔍 Перевірка оновлень...",
+                                   font=ctk.CTkFont(size=14))
+        status_label.pack(pady=30)
+        
+        progress = ctk.CTkProgressBar(progress_dialog, width=300)
+        progress.pack(pady=20)
+        progress.set(0.5)
+        progress.start()
+        
+        # Запускаємо перевірку в окремому потоці
+        thread = threading.Thread(target=check_updates_thread, daemon=True)
+        thread.start()
     
     def show_update_dialog(self, latest_version, current_version, download_url, changelog, config_url):
         """Показує діалог з інформацією про оновлення"""
