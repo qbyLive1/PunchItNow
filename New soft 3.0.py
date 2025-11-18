@@ -13471,6 +13471,9 @@ class App(ctk.CTk):
     def check_for_updates(self):
         """Перевіряє наявність оновлень на GitHub"""
         import threading
+        from functools import partial
+        
+        progress_dialog = None
         
         def check_updates_thread():
             try:
@@ -13502,29 +13505,41 @@ class App(ctk.CTk):
                     config_url = version_info.get("config_url", "")
                     
                     # Закриваємо діалог прогресу
-                    self.after(0, lambda: progress_dialog.destroy())
+                    if progress_dialog and progress_dialog.winfo_exists():
+                        self.after(0, progress_dialog.destroy)
                     
                     # Порівнюємо версії
                     if version.parse(latest_version) > version.parse(CURRENT_VERSION):
                         # Є оновлення - показуємо в головному потоці
-                        self.after(0, lambda: self.show_update_dialog(latest_version, CURRENT_VERSION, download_url, changelog, config_url))
+                        self.after(0, partial(self.show_update_dialog, latest_version, CURRENT_VERSION, download_url, changelog, config_url))
                     else:
-                        self.after(0, lambda: messagebox.showinfo("✅ Оновлення", 
-                                          f"У вас встановлена остання версія!\n\n"
-                                          f"Поточна версія: {CURRENT_VERSION}"))
+                        def show_up_to_date():
+                            messagebox.showinfo("✅ Оновлення", 
+                                              f"У вас встановлена остання версія!\n\n"
+                                              f"Поточна версія: {CURRENT_VERSION}")
+                        self.after(0, show_up_to_date)
                         
                 except requests.exceptions.RequestException as e:
-                    self.after(0, lambda: progress_dialog.destroy())
-                    self.after(0, lambda: messagebox.showerror("❌ Помилка", 
-                                       f"Не вдалося перевірити оновлення:\n{str(e)}\n\n"
-                                       f"Перевірте інтернет-з'єднання."))
+                    error_msg = str(e)
+                    if progress_dialog and progress_dialog.winfo_exists():
+                        self.after(0, progress_dialog.destroy)
+                    def show_error():
+                        messagebox.showerror("❌ Помилка", 
+                                           f"Не вдалося перевірити оновлення:\n{error_msg}\n\n"
+                                           f"Перевірте інтернет-з'єднання.")
+                    self.after(0, show_error)
                     
             except ImportError:
-                self.after(0, lambda: messagebox.showerror("❌ Помилка", 
-                                   "Відсутній модуль 'requests' або 'packaging'.\n\n"
-                                   "Встановіть: pip install requests packaging"))
+                def show_import_error():
+                    messagebox.showerror("❌ Помилка", 
+                                       "Відсутній модуль 'requests' або 'packaging'.\n\n"
+                                       "Встановіть: pip install requests packaging")
+                self.after(0, show_import_error)
             except Exception as e:
-                self.after(0, lambda: messagebox.showerror("❌ Помилка", f"Помилка перевірки оновлень:\n{str(e)}"))
+                error_msg = str(e)
+                def show_general_error():
+                    messagebox.showerror("❌ Помилка", f"Помилка перевірки оновлень:\n{error_msg}")
+                self.after(0, show_general_error)
         
         # Показуємо діалог з прогресом
         progress_dialog = ctk.CTkToplevel(self)
