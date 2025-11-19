@@ -1,7 +1,15 @@
 {
-  "version": "9.3.1",
-  "download_url": "https://github.com/qbyLive1/PunchItNow/releases/download/v9.3.1/PunchITNow_v9.3.1_Release.zip",
-  "changelog": "🔧 Bug Fixes v9.3.1:\n\n✅ Fixed CVV field skip bug in card autofill\n✅ Changed hotkey from Ctrl+V to V key\n✅ Added 300ms debounce protection\n✅ Improved reliability with lock mechanism",
-  "required": false,
+  "version": "9.3.2",
+  "release_date": "2025-11-19",
+  "download_url": "https://github.com/qbyLive1/PunchItNow/releases/download/v9.3.2/PunchITNow_v9.3.2_Release.zip",
+  "changelog": [
+    "Performance: Removed window state save/load functions (~200 lines)",
+    "Performance: Eliminated startup file I/O operations",
+    "Performance: Removed Configure event monitoring for faster response",
+    "Fix: Card autofill CVV skip bug (from v9.3.1)",
+    "Fix: Changed card autofill hotkey from Ctrl+V to V only",
+    "Fix: Added 300ms debounce and lock mechanism for card paste"
+  ],
+  "mandatory": false,
   "min_version": "9.0.0"
 }
